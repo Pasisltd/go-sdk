@@ -15,7 +15,7 @@ import (
 
 const (
 	// DefaultBaseURL is the default API base URL.
-	DefaultBaseURL = "http://localhost:8080/api"
+	DefaultBaseURL = "https://pasis-api.fly.dev/api"
 	// DefaultTimeout is the default HTTP client timeout.
 	DefaultTimeout = 30 * time.Second
 	// TokenRefreshBuffer is the time before expiration to refresh the token.
@@ -45,35 +45,22 @@ type Client struct {
 type ClientOption func(*Client)
 
 // WithBaseURL sets the base URL for the client.
-func WithBaseURL(url string) ClientOption {
-	return func(c *Client) {
-		c.baseURL = url
-	}
+func (c *Client) WithBaseURL(url string) ClientOption {
+	return func(c *Client) { c.baseURL = url }
 }
 
 // WithHTTPClient sets a custom HTTP client.
-func WithHTTPClient(client *http.Client) ClientOption {
-	return func(c *Client) {
-		c.httpClient = client
-	}
-}
-
-// WithTokenCache sets a custom token cache implementation.
-func WithTokenCache(cache TokenCache) ClientOption {
-	return func(c *Client) {
-		c.tokenCache = cache
-	}
+func (c *Client) WithHTTPClient(client *http.Client) ClientOption {
+	return func(c *Client) { c.httpClient = client }
 }
 
 // WithRetryCount sets the number of retries for failed requests.
 // Default is 3. Set to 0 to disable retries.
-func WithRetryCount(count int) ClientOption {
-	return func(c *Client) {
-		if count < 0 {
-			count = 0
-		}
-		c.retryCount = count
+func (c *Client) WithRetryCount(count int) ClientOption {
+	if count < 0 {
+		count = 0
 	}
+	return func(c *Client) { c.retryCount = max(count, 0) }
 }
 
 // NewClient creates a new Pasis SDK client.
@@ -94,23 +81,6 @@ func NewClient(appKey, secretKey string, opts ...ClientOption) *Client {
 	return c
 }
 
-// BaseURL returns the base URL of the client.
-func (c *Client) BaseURL() string {
-	return c.baseURL
-}
-
-// HTTPClient returns the HTTP client.
-func (c *Client) HTTPClient() *http.Client {
-	return c.httpClient
-}
-
-// AccessToken returns the current access token.
-func (c *Client) AccessToken() string {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.accessToken
-}
-
 // setTokens sets the access token, refresh token, and expiration time.
 func (c *Client) setTokens(token, refreshToken string, expiresAt time.Time) {
 	c.mu.Lock()
@@ -123,7 +93,7 @@ func (c *Client) setTokens(token, refreshToken string, expiresAt time.Time) {
 
 // doRequest executes a request to the API and handles authentication.
 func (c *Client) doRequest(ctx context.Context, method, endpoint string, body any, result any) error {
-	if err := c.EnsureToken(ctx); err != nil {
+	if err := c.ensureToken(ctx); err != nil {
 		return fmt.Errorf("failed to ensure token: %w", err)
 	}
 

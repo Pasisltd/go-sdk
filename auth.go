@@ -127,7 +127,7 @@ func (c *Client) refreshAccessToken(ctx context.Context) error {
 
 // EnsureToken ensures a valid access token is available.
 // It checks the cache first, then validates expiration, and refreshes if needed.
-func (c *Client) EnsureToken(ctx context.Context) error {
+func (c *Client) ensureToken(ctx context.Context) error {
 	c.mu.RLock()
 	expiresAt := c.tokenExpiresAt
 	c.mu.RUnlock()
