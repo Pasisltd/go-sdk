@@ -7,17 +7,12 @@ import (
 
 // GetWallet retrieves wallet details for the authenticated merchant.
 func (c *Client) GetWallet(ctx context.Context) (*Wallet, error) {
-	var res SuccessResponse
+	var res SuccessResponse[Wallet]
 	if err := c.doRequest(ctx, "GET", "/wallet", nil, &res); err != nil {
 		return nil, fmt.Errorf("failed to get wallet: %w", err)
 	}
 
-	wallet, ok := res.Data.(Wallet)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast data to Wallet")
-	}
-
-	return &wallet, nil
+	return &res.Data, nil
 }
 
 // Deposit initiates a deposit transaction to the wallet.
@@ -26,17 +21,12 @@ func (c *Client) Deposit(ctx context.Context, req *DepositRequest) (*WalletTrans
 		return nil, fmt.Errorf("deposit request cannot be nil")
 	}
 
-	var res SuccessResponse
+	var res SuccessResponse[WalletTransaction]
 	if err := c.doRequest(ctx, "POST", "/wallet/deposit", req, &res); err != nil {
 		return nil, fmt.Errorf("failed to deposit: %w", err)
 	}
 
-	transaction, ok := res.Data.(WalletTransaction)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast data to WalletTransaction")
-	}
-
-	return &transaction, nil
+	return &res.Data, nil
 }
 
 // Withdraw initiates a withdrawal transaction from the wallet.
@@ -45,15 +35,10 @@ func (c *Client) Withdraw(ctx context.Context, req *WithdrawRequest) (*WalletTra
 		return nil, fmt.Errorf("withdraw request cannot be nil")
 	}
 
-	var res SuccessResponse
+	var res SuccessResponse[WalletTransaction]
 	if err := c.doRequest(ctx, "POST", "/wallet/withdraw", req, &res); err != nil {
 		return nil, fmt.Errorf("failed to withdraw: %w", err)
 	}
 
-	transaction, ok := res.Data.(WalletTransaction)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast data to WalletTransaction")
-	}
-
-	return &transaction, nil
+	return &res.Data, nil
 }

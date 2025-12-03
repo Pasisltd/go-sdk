@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -12,7 +11,11 @@ import (
 // authenticate authenticates the application and retrieves access tokens.
 func (c *Client) authenticate(ctx context.Context) error {
 	urlStr := c.baseURL + "/auth/app"
-	reqBody, _ := json.Marshal(AppAuthRequest{AppKey: c.appKey, SecretKey: c.secretKey})
+	reqBody, err := json.Marshal(AppAuthRequest{AppKey: c.appKey, SecretKey: c.secretKey})
+	if err != nil {
+		return err
+	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, urlStr, bytes.NewReader(reqBody))
 	if err != nil {
 		return err
@@ -29,15 +32,11 @@ func (c *Client) authenticate(ctx context.Context) error {
 		return parseErrorResponse(resp)
 	}
 
-	var res SuccessResponse
+	var res SuccessResponse[AppAuthResponse]
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return err
 	}
-	authResp, ok := res.Data.(AppAuthResponse)
-	if !ok {
-		return fmt.Errorf("invalid auth response")
-	}
-	c.setTokens(authResp.AccessToken, authResp.RefreshToken, time.Now().Add(time.Duration(authResp.ExpiresIn)*time.Second))
+	c.setTokens(res.Data.AccessToken, res.Data.RefreshToken, time.Now().Add(time.Duration(res.Data.ExpiresIn)*time.Second))
 	return nil
 }
 
@@ -68,15 +67,11 @@ func (c *Client) refreshAccessToken(ctx context.Context) error {
 		return parseErrorResponse(resp)
 	}
 
-	var res SuccessResponse
+	var res SuccessResponse[AppAuthResponse]
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return err
 	}
-	authResp, ok := res.Data.(AppAuthResponse)
-	if !ok {
-		return fmt.Errorf("invalid auth response")
-	}
-	c.setTokens(authResp.AccessToken, authResp.RefreshToken, time.Now().Add(time.Duration(authResp.ExpiresIn)*time.Second))
+	c.setTokens(res.Data.AccessToken, res.Data.RefreshToken, time.Now().Add(time.Duration(res.Data.ExpiresIn)*time.Second))
 	return nil
 }
 

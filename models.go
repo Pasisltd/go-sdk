@@ -88,9 +88,9 @@ type PaginationMeta struct {
 }
 
 // SuccessResponse represents a successful API response.
-type SuccessResponse struct {
+type SuccessResponse[T any] struct {
 	Message    string          `json:"message,omitempty"`
-	Data       any             `json:"data"`
+	Data       T               `json:"data"`
 	Pagination *PaginationMeta `json:"pagination,omitempty"`
 }
 
