@@ -21,12 +21,17 @@ func (c *Client) ListTransactions(ctx context.Context, page, perPage int) (*Tran
 
 	u := "/wallet/transactions"
 
-	var resp TransactionsResponse
-	if err := c.doRequest(ctx, http.MethodGet, u, q, &resp); err != nil {
+	var res SuccessResponse
+	if err := c.doRequest(ctx, http.MethodGet, u, q, &res); err != nil {
 		return nil, fmt.Errorf("failed to list transactions: %w", err)
 	}
 
-	return &resp, nil
+	transactions, ok := res.Data.(TransactionsResponse)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast data to TransactionsResponse")
+	}
+
+	return &transactions, nil
 }
 
 // GetTransaction retrieves details of a specific transaction by ID.
@@ -36,9 +41,15 @@ func (c *Client) GetTransaction(ctx context.Context, id string) (*WalletTransact
 	}
 
 	endpoint := fmt.Sprintf("/wallet/transactions/%s", url.PathEscape(id))
-	var transaction WalletTransaction
-	if err := c.doRequest(ctx, "GET", endpoint, nil, &transaction); err != nil {
+	var res SuccessResponse
+	if err := c.doRequest(ctx, "GET", endpoint, nil, &res); err != nil {
 		return nil, fmt.Errorf("failed to get transaction: %w", err)
 	}
+
+	transaction, ok := res.Data.(WalletTransaction)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast data to WalletTransaction")
+	}
+
 	return &transaction, nil
 }

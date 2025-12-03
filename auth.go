@@ -6,34 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"path"
 	"time"
 )
 
 // authenticate authenticates the application and retrieves access tokens.
 func (c *Client) authenticate(ctx context.Context) error {
-	baseURL, err := url.Parse(c.baseURL)
+	urlStr := c.baseURL + "/auth/app"
+	reqBody, _ := json.Marshal(AppAuthRequest{AppKey: c.appKey, SecretKey: c.secretKey})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, urlStr, bytes.NewReader(reqBody))
 	if err != nil {
-		return fmt.Errorf("invalid base URL: %w", err)
+		return err
 	}
-	baseURL.Path = path.Join(baseURL.Path, "auth", "app")
-	reqURL := baseURL.String()
-
-	reqBody := AppAuthRequest{
-		AppKey:    c.appKey,
-		SecretKey: c.secretKey,
-	}
-	bodyBytes, err := json.Marshal(reqBody)
-	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewReader(bodyBytes))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
@@ -42,19 +25,19 @@ func (c *Client) authenticate(ctx context.Context) error {
 		return &AuthError{Message: "failed to authenticate", Err: err}
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		return parseErrorResponse(resp)
 	}
 
-	var authResp SuccessResponse[AppAuthResponse]
-	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
-		return fmt.Errorf("failed to decode response: %w", err)
+	var res SuccessResponse
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return err
 	}
-
-	expiresAt := time.Now().Add(time.Duration(authResp.Data.ExpiresIn) * time.Second)
-	c.setTokens(authResp.Data.AccessToken, authResp.Data.RefreshToken, expiresAt)
-
+	authResp, ok := res.Data.(AppAuthResponse)
+	if !ok {
+		return fmt.Errorf("invalid auth response")
+	}
+	c.setTokens(authResp.AccessToken, authResp.RefreshToken, time.Now().Add(time.Duration(authResp.ExpiresIn)*time.Second))
 	return nil
 }
 
@@ -63,23 +46,15 @@ func (c *Client) refreshAccessToken(ctx context.Context) error {
 	c.mu.RLock()
 	refreshToken := c.refreshToken
 	c.mu.RUnlock()
-
 	if refreshToken == "" {
 		return &AuthError{Message: "no refresh token available"}
 	}
 
-	baseURL, err := url.Parse(c.baseURL)
+	urlStr := c.baseURL + "/auth/refresh"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, urlStr, nil)
 	if err != nil {
-		return fmt.Errorf("invalid base URL: %w", err)
+		return err
 	}
-	baseURL.Path = path.Join(baseURL.Path, "auth", "refresh")
-	reqURL := baseURL.String()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+refreshToken)
@@ -89,19 +64,19 @@ func (c *Client) refreshAccessToken(ctx context.Context) error {
 		return &AuthError{Message: "failed to refresh token", Err: err}
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
 		return parseErrorResponse(resp)
 	}
 
-	var authResp SuccessResponse[AppAuthResponse]
-	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
-		return fmt.Errorf("failed to decode response: %w", err)
+	var res SuccessResponse
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return err
 	}
-
-	expiresAt := time.Now().Add(time.Duration(authResp.Data.ExpiresIn) * time.Second)
-	c.setTokens(authResp.Data.AccessToken, authResp.Data.RefreshToken, expiresAt)
-
+	authResp, ok := res.Data.(AppAuthResponse)
+	if !ok {
+		return fmt.Errorf("invalid auth response")
+	}
+	c.setTokens(authResp.AccessToken, authResp.RefreshToken, time.Now().Add(time.Duration(authResp.ExpiresIn)*time.Second))
 	return nil
 }
 
