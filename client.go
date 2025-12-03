@@ -181,22 +181,9 @@ func (c *Client) doRequest(ctx context.Context, method, endpoint string, body an
 		}
 
 		if result != nil {
-			var successResp SuccessResponse
-			if err := json.NewDecoder(resp.Body).Decode(&successResp); err != nil {
+			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 				resp.Body.Close()
 				return fmt.Errorf("failed to decode response: %w", err)
-			}
-
-			if successResp.Data != nil {
-				dataBytes, err := json.Marshal(successResp.Data)
-				if err != nil {
-					resp.Body.Close()
-					return fmt.Errorf("failed to marshal response data: %w", err)
-				}
-				if err := json.Unmarshal(dataBytes, result); err != nil {
-					resp.Body.Close()
-					return fmt.Errorf("failed to unmarshal response data: %w", err)
-				}
 			}
 		}
 

@@ -65,18 +65,18 @@ const (
 
 // WalletTransaction represents a wallet transaction.
 type WalletTransaction struct {
-	ID                string                 `json:"id"`
-	WalletID          string                 `json:"wallet_id"`
-	Amount            string                 `json:"amount"` // Stored as string to preserve decimal precision
-	Currency          string                 `json:"currency"`
-	Type              TransactionType        `json:"type"`
-	Status            TransactionStatus      `json:"status"`
-	Description       string                 `json:"description,omitempty"`
-	Provider          string                 `json:"provider,omitempty"`
-	ProviderReference string                 `json:"provider_reference,omitempty"`
-	Metadata          map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt         string                 `json:"created_at"`
-	UpdatedAt         string                 `json:"updated_at"`
+	ID                string            `json:"id"`
+	WalletID          string            `json:"wallet_id"`
+	Amount            string            `json:"amount"` // Stored as string to preserve decimal precision
+	Currency          string            `json:"currency"`
+	Type              TransactionType   `json:"type"`
+	Status            TransactionStatus `json:"status"`
+	Description       string            `json:"description,omitempty"`
+	Provider          string            `json:"provider,omitempty"`
+	ProviderReference string            `json:"provider_reference,omitempty"`
+	Metadata          map[string]any    `json:"metadata,omitempty"`
+	CreatedAt         string            `json:"created_at"`
+	UpdatedAt         string            `json:"updated_at"`
 }
 
 // PaginationMeta represents pagination metadata.
@@ -88,9 +88,9 @@ type PaginationMeta struct {
 }
 
 // SuccessResponse represents a successful API response.
-type SuccessResponse struct {
-	Data       interface{}     `json:"data"`
+type SuccessResponse[T any] struct {
 	Message    string          `json:"message,omitempty"`
+	Data       T               `json:"data"`
 	Pagination *PaginationMeta `json:"pagination,omitempty"`
 }
 
@@ -102,6 +102,7 @@ type ErrorResponse struct {
 
 // TransactionsResponse represents a paginated list of transactions.
 type TransactionsResponse struct {
+	Message    string              `json:"message,omitempty"`
 	Data       []WalletTransaction `json:"data"`
 	Pagination *PaginationMeta     `json:"pagination,omitempty"`
 }

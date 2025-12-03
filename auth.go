@@ -47,23 +47,13 @@ func (c *Client) authenticate(ctx context.Context) error {
 		return parseErrorResponse(resp)
 	}
 
-	var successResp SuccessResponse
-	if err := json.NewDecoder(resp.Body).Decode(&successResp); err != nil {
+	var authResp SuccessResponse[AppAuthResponse]
+	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	authDataBytes, err := json.Marshal(successResp.Data)
-	if err != nil {
-		return fmt.Errorf("failed to marshal auth data: %w", err)
-	}
-
-	var authResp AppAuthResponse
-	if err := json.Unmarshal(authDataBytes, &authResp); err != nil {
-		return fmt.Errorf("failed to unmarshal auth response: %w", err)
-	}
-
-	expiresAt := time.Now().Add(time.Duration(authResp.ExpiresIn) * time.Second)
-	c.setTokens(authResp.AccessToken, authResp.RefreshToken, expiresAt)
+	expiresAt := time.Now().Add(time.Duration(authResp.Data.ExpiresIn) * time.Second)
+	c.setTokens(authResp.Data.AccessToken, authResp.Data.RefreshToken, expiresAt)
 
 	return nil
 }
@@ -104,23 +94,13 @@ func (c *Client) refreshAccessToken(ctx context.Context) error {
 		return parseErrorResponse(resp)
 	}
 
-	var successResp SuccessResponse
-	if err := json.NewDecoder(resp.Body).Decode(&successResp); err != nil {
+	var authResp SuccessResponse[AppAuthResponse]
+	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	authDataBytes, err := json.Marshal(successResp.Data)
-	if err != nil {
-		return fmt.Errorf("failed to marshal auth data: %w", err)
-	}
-
-	var authResp AppAuthResponse
-	if err := json.Unmarshal(authDataBytes, &authResp); err != nil {
-		return fmt.Errorf("failed to unmarshal auth response: %w", err)
-	}
-
-	expiresAt := time.Now().Add(time.Duration(authResp.ExpiresIn) * time.Second)
-	c.setTokens(authResp.AccessToken, authResp.RefreshToken, expiresAt)
+	expiresAt := time.Now().Add(time.Duration(authResp.Data.ExpiresIn) * time.Second)
+	c.setTokens(authResp.Data.AccessToken, authResp.Data.RefreshToken, expiresAt)
 
 	return nil
 }
