@@ -3,29 +3,29 @@ package pasis
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 )
 
 // ListTransactions retrieves a paginated list of wallet transactions.
-func (c *Client) ListTransactions(ctx context.Context, page, size int) (*TransactionsResponse, error) {
-	params := url.Values{}
+func (c *Client) ListTransactions(ctx context.Context, page, perPage int) (*TransactionsResponse, error) {
+	q := make(url.Values)
+
 	if page > 0 {
-		params.Set("page", strconv.Itoa(page))
+		q.Add("page", strconv.Itoa(page))
 	}
-	if size > 0 {
-		params.Set("size", strconv.Itoa(size))
+	if perPage > 0 {
+		q.Add("per_page", strconv.Itoa(perPage))
 	}
 
-	endpoint := "/wallet/transactions"
-	if len(params) > 0 {
-		endpoint += "?" + params.Encode()
-	}
+	u := "/wallet/transactions"
 
 	var resp TransactionsResponse
-	if err := c.doRequest(ctx, "GET", endpoint, nil, &resp); err != nil {
+	if err := c.doRequest(ctx, http.MethodGet, u, q, &resp); err != nil {
 		return nil, fmt.Errorf("failed to list transactions: %w", err)
 	}
+
 	return &resp, nil
 }
 

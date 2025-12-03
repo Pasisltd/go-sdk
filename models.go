@@ -17,20 +17,20 @@ type AppAuthResponse struct {
 
 // DepositRequest represents a request to deposit funds into a wallet.
 type DepositRequest struct {
-	Amount      string            `json:"amount"`       // Required: Amount as string to preserve decimal precision
-	Currency    string            `json:"currency"`    // Required: Currency code
-	Provider    string            `json:"provider"`    // Required: Payment provider
-	Region      string            `json:"region"`       // Required: Region code
+	Amount      string            `json:"amount"`   // Required: Amount as string to preserve decimal precision
+	Currency    string            `json:"currency"` // Required: Currency code
+	Provider    string            `json:"provider"` // Required: Payment provider
+	Region      string            `json:"region"`   // Required: Region code
 	PhoneNumber string            `json:"phone_number,omitempty"`
 	Metadata    map[string]string `json:"metadata,omitempty"`
 }
 
 // WithdrawRequest represents a request to withdraw funds from a wallet.
 type WithdrawRequest struct {
-	Amount      string            `json:"amount"`       // Required: Amount as string to preserve decimal precision
-	Currency    string            `json:"currency"`    // Required: Currency code
-	Provider    string            `json:"provider"`    // Required: Payment provider
-	Region      string            `json:"region"`       // Required: Region code
+	Amount      string            `json:"amount"`   // Required: Amount as string to preserve decimal precision
+	Currency    string            `json:"currency"` // Required: Currency code
+	Provider    string            `json:"provider"` // Required: Payment provider
+	Region      string            `json:"region"`   // Required: Region code
 	PhoneNumber string            `json:"phone_number,omitempty"`
 	Metadata    map[string]string `json:"metadata,omitempty"`
 }
@@ -65,19 +65,18 @@ const (
 
 // WalletTransaction represents a wallet transaction.
 type WalletTransaction struct {
-	ID               string            `json:"id"`
-	WalletID         string            `json:"wallet_id"`
-	Amount           string            `json:"amount"` // Stored as string to preserve decimal precision
-	Currency         string            `json:"currency"`
-	Type             TransactionType   `json:"type"`
-	Status           TransactionStatus `json:"status"`
-	Description     string            `json:"description,omitempty"`
-	Provider         string            `json:"provider,omitempty"`
-	ProviderReference string          `json:"provider_reference,omitempty"`
-	Fees             *Fees             `json:"fees,omitempty"`
-	Metadata         map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt        string            `json:"created_at"`
-	UpdatedAt        string            `json:"updated_at"`
+	ID                string                 `json:"id"`
+	WalletID          string                 `json:"wallet_id"`
+	Amount            string                 `json:"amount"` // Stored as string to preserve decimal precision
+	Currency          string                 `json:"currency"`
+	Type              TransactionType        `json:"type"`
+	Status            TransactionStatus      `json:"status"`
+	Description       string                 `json:"description,omitempty"`
+	Provider          string                 `json:"provider,omitempty"`
+	ProviderReference string                 `json:"provider_reference,omitempty"`
+	Metadata          map[string]interface{} `json:"metadata,omitempty"`
+	CreatedAt         string                 `json:"created_at"`
+	UpdatedAt         string                 `json:"updated_at"`
 }
 
 // PaginationMeta represents pagination metadata.
@@ -104,7 +103,7 @@ type ErrorResponse struct {
 // TransactionsResponse represents a paginated list of transactions.
 type TransactionsResponse struct {
 	Data       []WalletTransaction `json:"data"`
-	Pagination *PaginationMeta    `json:"pagination,omitempty"`
+	Pagination *PaginationMeta     `json:"pagination,omitempty"`
 }
 
 // Wallet represents wallet details.
@@ -132,4 +131,3 @@ type MerchantProfile struct {
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 }
-

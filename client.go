@@ -97,21 +97,26 @@ func (c *Client) doRequest(ctx context.Context, method, endpoint string, body an
 		return fmt.Errorf("failed to ensure token: %w", err)
 	}
 
-	baseURL, err := url.Parse(c.baseURL)
+	reqURL, err := url.Parse(c.baseURL)
 	if err != nil {
 		return fmt.Errorf("invalid base URL: %w", err)
 	}
 	if endpoint != "" && endpoint[0] == '/' {
 		endpoint = endpoint[1:]
 	}
-	baseURL.Path = path.Join(baseURL.Path, endpoint)
-	reqURL := baseURL.String()
-
+	reqURL.Path = path.Join(reqURL.Path, endpoint)
 	var bodyBytes []byte
-	if body != nil {
-		bodyBytes, err = json.Marshal(body)
-		if err != nil {
-			return fmt.Errorf("failed to marshal request body: %w", err)
+
+	if method == http.MethodGet {
+		if q, ok := body.(url.Values); ok && len(q) > 0 {
+			reqURL.RawQuery = q.Encode()
+		}
+	} else {
+		if body != nil {
+			bodyBytes, err = json.Marshal(body)
+			if err != nil {
+				return fmt.Errorf("failed to marshal request body: %w", err)
+			}
 		}
 	}
 
@@ -134,7 +139,7 @@ func (c *Client) doRequest(ctx context.Context, method, endpoint string, body an
 			reqBody = bytes.NewReader(bodyBytes)
 		}
 
-		req, err := http.NewRequestWithContext(ctx, method, reqURL, reqBody)
+		req, err := http.NewRequestWithContext(ctx, method, reqURL.String(), reqBody)
 		if err != nil {
 			return fmt.Errorf("failed to create request: %w", err)
 		}
